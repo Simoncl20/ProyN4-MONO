@@ -97,14 +97,148 @@ def rq4_reparticion_estados_contrato(data_contratos: pd.DataFrame)->None:
     plt.ylabel('Estado del Contrato')
     plt.show()
     
+def rq5_distribucion_valores_contratos(data_contratos: pd.DataFrame)->None:
+    plt.figure()
+    plt.title('Distribucion de los valores de los contratos')
+    plt.ylabel('Densidad de Probabilidad')
+    plt.xlabel('Valor Contrato')
+    filtrado = data_contratos.ValordelContrato[(data_contratos.ValordelContrato > 0) & (data_contratos.ValordelContrato < 100)]
+    plt.xlim((0,100))
+    
+    grafico = filtrado.plot.kde()
+
+    plt.show()
+    
+    
+def obtener_valores_departamento(data_contratos: pd.DataFrame, departamento: str, nombres_sectores: list)->list:
+    
+    count_departamento = data_contratos[(data_contratos.Departamento == departamento)]
+    sectores = count_departamento.groupby('Sector')
+    sectores = sectores.ValordelContrato.sum()
+    data = sectores.sort_index().to_dict()
+    dict_sectores = {}
+    for nombre in nombres_sectores:
+        dict_sectores[nombre] = data.get(nombre, 0)
+    retorno = list(dict_sectores.values())
+    return retorno
+    
         
     
+
+def rq6_crear_matriz(data_contratos: pd.DataFrame)->list:
+    datos = data_contratos[data_contratos.Departamento != 'No Definido']
+    departamentos = sorted(datos.Departamento.unique())
+    departamentos_dict = dict(list(enumerate(departamentos)))
+    sectores = sorted(datos.Sector.unique())
+    sectores_dict = dict(list(enumerate(sectores)))
+    nombres_sectores = list(datos.Sector.unique())
+    nombres_sectores.sort()
+    matriz = []
+    for i in range(0, len(departamentos_dict)):
+        departamento = departamentos_dict[i]
+        datos_departamento = obtener_valores_departamento(datos, departamento, nombres_sectores)
+        matriz.append(datos_departamento)
+    
+    return (matriz, departamentos_dict, sectores_dict)
+
+def presupuesto_sectores(matriz: list, departamentos: dict, sectores: dict)->dict:
+    
+    presupuesto_sectores = {}
+    
+    for departamento in departamentos:
+        
+        data_dpto = matriz[departamento]
+        
+        for sector in sectores:
+            
+            valor_sector = data_dpto[sector]
+            nombre_sector = sectores[sector]
+            acumulado_sector = presupuesto_sectores.get(nombre_sector, 0)
+            presupuesto_sectores[nombre_sector] = acumulado_sector + valor_sector
+            
+    
+    return presupuesto_sectores
+    
+def rq7_sectores_inversion(matriz: list, inf: float, sup: float, departamentos: dict, sectores: dict)->list:
+    presupuesto = presupuesto_sectores(matriz, departamentos, sectores)
+    sectores_en_rango = []
+    
+    for sector in presupuesto:
+        
+        if presupuesto[sector] > inf and presupuesto[sector] < sup:
+            
+            sectores_en_rango.append(sector)
+            
+    
+    return sectores_en_rango
+
+def rq8_valor_sector(matriz: list, departamentos: dict, sectores: dict, sector_buscar: str)->float:
+    
+    presupuesto = presupuesto_sectores(matriz, departamentos, sectores)
+    
+    return  presupuesto[sector_buscar]
     
     
     
+def presupuesto_departamentos(matriz, departamento, sectores):
+    
+    presupuesto_dpto = {}
+    
+    for departamento in departamentos:
+        
+        data_dpto = matriz[departamento]
+        nombre_depto = departamentos[departamento]
+        acumulado = 0
+        for sector in sectores:
+            
+            valor_sector = data_dpto[sector]
+            acumulado += valor_sector
+        
+        presupuesto_dpto[nombre_depto] = acumulado
+    
+    return presupuesto_dpto
+
+def get_key(val, my_dict):
+    for key, value in my_dict.items():
+         if val == value:
+             return key
+
+def rq9_deptos_menor_gasto(matriz, departamento, sectores):
+    
+    presupuestos = presupuesto_departamentos(matriz, departamento, sectores)
+    
+    lista_pp = list(presupuestos.values())
+    
+    lista_pp.sort()
+    
+    lista_filtrada = lista_pp[0:10]
+    
+    grafico = {}
+    
+    for pp in lista_filtrada:
+        
+        depto = get_key(pp, presupuestos)
+        
+        grafico[depto] = pp
+        
+    
+    df = pd.DataFrame.from_dict(grafico, orient='index', columns=['Gasto'])
+    
+    
+    plt.figure()
+    
+    df.plot(kind = 'bar')
+    
+    plt.show()
+        
 
 
 datos = rq0_cargar_datos('2019.csv') 
+retornos = rq6_crear_matriz(datos)
+matriz = retornos[0]
+departamentos = retornos[1]
+sectores = retornos[2]
+
 
 
 
