@@ -212,6 +212,8 @@ def rq9_deptos_menor_gasto(matriz, departamento, sectores):
     lista_pp.sort()
     
     lista_filtrada = lista_pp[0:10]
+
+    nombre = "Simon Calderon"
     
     grafico = {}
     
@@ -225,12 +227,27 @@ def rq9_deptos_menor_gasto(matriz, departamento, sectores):
     df = pd.DataFrame.from_dict(grafico, orient='index', columns=['Gasto'])
     
     
+    
     plt.figure()
     
     df.plot(kind = 'bar')
     
     plt.show()
-        
+
+def fibonacci(n):
+    # Creamos un arreglo para almacenar los valores de Fibonacci.
+    fib = [0] * (n + 1)
+
+    # Casos base
+    fib[0] = 0
+    fib[1] = 1
+
+    # Calculamos los valores de Fibonacci desde el 2 hasta n.
+    for i in range(2, n + 1):
+        fib[i] = fib[i - 1] + fib[i - 2]
+
+    return fib[n]
+    
 
 
 datos = rq0_cargar_datos('2019.csv') 
